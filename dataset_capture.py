@@ -1,5 +1,6 @@
 import cv2
 import os
+import csv
 
 # Create dataset directory if it doesn't exist
 if not os.path.exists('dataset'):
@@ -18,8 +19,15 @@ cam.set(3, 640) # set video width
 cam.set(4, 480) # set video height
 
 # Get user input
-face_id = input('\n enter user id end press <return> ==>  ')
-face_name = input('\n enter user name end press <return> ==>  ')
+face_id = input('\n Enter user ID and press <return> ==>  ')
+face_name = input('\n Enter user Name and press <return> ==>  ')
+
+# Check if ID is integer
+try:
+    int(face_id)
+except ValueError:
+    print("[ERROR] User ID must be an integer.")
+    exit()
 
 print("\n [INFO] Initializing face capture. Look at the camera and wait ...")
 # Initialize individual sampling face count
@@ -47,17 +55,16 @@ while(True):
         count += 1
 
         # Save the captured image into the datasets folder
-        # Format: User.ID.SampleNum.jpg
-        # We also save the name in a separate file or just keep track manually for this simple project
-        # Ideally, we'd map ID to Name in the recognition script.
         cv2.imwrite("dataset/User." + str(face_id) + '.' + str(count) + ".jpg", gray[y:y+h,x:x+w])
 
-        cv2.imshow('image', img)
+        # Add progress text on image
+        cv2.putText(img, f"Sample: {count}/100", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
+        cv2.imshow('Face Data Capture', img)
 
     k = cv2.waitKey(100) & 0xff # Press 'ESC' for exiting video
     if k == 27:
         break
-    elif count >= 30: # Take 30 face sample and stop video
+    elif count >= 100: # Take 100 face sample and stop video
          break
 
 # Do a bit of cleanup
@@ -65,6 +72,12 @@ print("\n [INFO] Exiting Program and cleanup stuff")
 cam.release()
 cv2.destroyAllWindows()
 
-# Create/Append to a mapping file for ID to Name
-with open("names.txt", "a") as f:
-    f.write(f"{face_id},{face_name}\n")
+# Create/Append to a mapping file for ID to Name (names.csv)
+file_exists = os.path.exists("names.csv")
+with open("names.csv", "a", newline='') as f:
+    writer = csv.writer(f)
+    if not file_exists:
+        writer.writerow(["ID", "Name"])
+    writer.writerow([face_id, face_name])
+
+print("\n [INFO] Face data collected successfully!")
