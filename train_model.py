@@ -16,7 +16,7 @@ def getImagesAndLabels(path):
     faceSamples=[]
     ids = []
 
-    for imagePath in imagePaths:
+    for i, imagePath in enumerate(imagePaths):
         # ignore system files like .DS_Store if any
         if os.path.split(imagePath)[-1].startswith("."):
             continue
@@ -26,12 +26,21 @@ def getImagesAndLabels(path):
 
         # extract the face ID from the image name
         # Format: User.ID.SampleNum.jpg
-        id = int(os.path.split(imagePath)[-1].split(".")[1])
+        try:
+            id = int(os.path.split(imagePath)[-1].split(".")[1])
+        except (IndexError, ValueError):
+            print(f"[WARNING] Skipping invalid file format: {imagePath}")
+            continue
+
         faces = detector.detectMultiScale(img_numpy)
 
         for (x,y,w,h) in faces:
             faceSamples.append(img_numpy[y:y+h,x:x+w])
             ids.append(id)
+            
+        # Print progress
+        if i % 50 == 0 and i > 0:
+            print(f" [INFO] Processed {i}/{len(imagePaths)} images...")
 
     return faceSamples,ids
 
